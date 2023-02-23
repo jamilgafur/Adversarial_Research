@@ -26,7 +26,7 @@ def apso(X_train, cost_func, num_particles = 10, max_iter = 10, w = 1.0, c1 = 0.
     swarm = []
     for i in range(num_particles):
         x0 = X_train[i].flatten()  # use data as initial positions
-        swarm.append(Particle(x0=x0, num_dimensions=num_dimensions, w=w, c1=c1, c2=c2))
+        swarm.append(Particle.Particle(x0=x0, num_dimensions=num_dimensions, w=w, c1=c1, c2=c2))
 
     # initialize best position and error for the group
     pos_best_g = swarm[0].position_i.copy()
@@ -36,7 +36,7 @@ def apso(X_train, cost_func, num_particles = 10, max_iter = 10, w = 1.0, c1 = 0.
     for _ in range(max_iter):
         # evaluate fitness and update the best position and error for the group
         for p in swarm:
-            p.evaluate(cost_func=cost_func, model=cost_func[0])
+            p.evaluate(costFunc=cost_func[1], model=cost_func[0])
             if p.err_i > err_best_g:
                 pos_best_g = p.position_i.copy()
                 err_best_g = p.err_i

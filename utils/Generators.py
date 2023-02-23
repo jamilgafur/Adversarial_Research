@@ -54,6 +54,6 @@ def apsoGenerator(X_train, costFunc, epochs=100, xlow=-10, xhigh=10, ylow=0, yhi
     os.makedirs("./Output/apso/", exist_ok=True)
 
     model = costFunc[0]
-    positions, labels = APSO(X_train, costFunc=costFunc, maxiter=epochs)
+    positions, labels = apso(X_train, costFunc)
 
-    return positions, labels
+    return (positions, labels)

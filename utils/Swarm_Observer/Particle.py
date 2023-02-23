@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-
+import pdb
 class Particle:
     def __init__(self, num_dimensions, x0=None, w=1.0, c1=0.8, c2=0.2):
         """
@@ -66,4 +66,4 @@ class Particle:
         - bounds (tuple): a tuple of the lower and upper bounds of the search space
         """
         for i in range(self.dim):
-            self.position_i[i] = np.clip(self.position_i[i] + self.velocity_i[i], bounds[0], bounds[1])
+            self.position_i[i] = self.position_i[i] + self.velocity_i[i]
