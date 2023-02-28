@@ -25,7 +25,7 @@ def main():
     seedEverything(100)
     # Define training parameters
     batch_size = 1024
-    num_epochs = 0
+    num_epochs = 5
     learning_rate = 0.001
 
     # Load the MNIST dataset
