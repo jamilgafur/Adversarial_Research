@@ -1,4 +1,4 @@
-# Adversraial Observation
+# Adversarial Observation
 ---
 
 This technique uses adversarial attacks to infer relationships between input and output predictions in a human-understandable format, making neural networks more reliable and interpretable.
@@ -40,3 +40,23 @@ This project is licensed under the [insert license here]. For more information, 
 
 
 
+# Structure
+```
+.
+├── Binary_FGSM.py  
+├── interactiveStudy.sh
+├── MNIST_APSO.py
+├── MNIST_FGSM.py
+├── README.md
+└── utils
+    ├── Attacks.py
+    ├── Dataset.py
+    ├── Generators.py
+    ├── model
+    │   ├── CNN.py
+    │   └── DNN.py
+    ├── Swarm_Observer
+    │   ├── Particle.py
+    │   └── Swarm.py
+    └── vis.py
+```
