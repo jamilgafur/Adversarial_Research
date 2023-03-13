@@ -1,8 +1,8 @@
 import torch
 import numpy as np
-from Adversarial_Observation.Swarm_Observer import BirdParticle
+from . import BirdParticle
 import tqdm
-
+import pandas as pd
 class PSO:
     def __init__(self, starting_positions: torch.Tensor, cost_func: callable, model: torch.nn.Module,
                  w: float = 1.0, c1: float = 0.8, c2: float = 0.2):
@@ -41,3 +41,18 @@ class PSO:
             p.update_position()
 
         return [p.position_i for p in self.swarm], [p.pos_best_i for p in self.swarm]
+
+    def save_history(self, filename: str):
+        """
+        Saves the history of the swarm to a csv file.
+        :param filename: The name of the file to save the history to.
+        """
+        data = []
+        for particle in self.swarm:
+            for epoch in range(len(particle.history)):
+                data.append([epoch, particle.history[epoch].detach().numpy()])
+
+        df = pd.DataFrame(data, columns=['Epoch', 'Position'])
+        # sort dataframe by epoch
+        df = df.sort_values(by=['Epoch'])
+        df.to_csv(filename, index=False)

@@ -14,7 +14,7 @@ def saliency_map(img: torch.Tensor, model: torch.nn.Module) -> torch.Tensor:
         saliency map (ndarray): Saliency map for the input image.
     """
     # Convert the input image to a PyTorch tensor with dtype=torch.float32 and enable gradient computation
-    img = torch.tensor(img, dtype=torch.float32, requires_grad=True)
+    img = img.clone().detach().requires_grad_(True)
     model.eval()
 
     # Disable gradient computation for all model parameters
