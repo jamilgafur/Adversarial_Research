@@ -43,4 +43,4 @@ def activation_map(input_tensor: torch.Tensor,
     slc = (slc - slc.min()) / (slc.max() - slc.min())
 
     # return the saliency map as a numpy array
-    return slc.detach().numpy()
+    return slc.detach()

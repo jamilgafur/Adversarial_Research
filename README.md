@@ -98,3 +98,12 @@ This project is licensed under the [insert license here]. For more information, 
 * Artifacts/transform.npy: The PCA reduced MNIST training Data
 * Artifacts/labels.npy: The labels for the PCA reduced MNIST training Data
 * Artifacts/pca.pkl: the pickled file of the MNIST PCA used to generate transform.npy
+
+
+## Developing
+
+To install Adversarial_Observation, along with the tools you need to develop and run tests, run the following in your virtualenv:
+
+```bash
+$ pip install -e .[dev]
+```
