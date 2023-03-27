@@ -1,5 +1,6 @@
 import torch
 import numpy as np
+import pdb
 
 class BirdParticle:
     def __init__(self, position, w=1.0, c1=0.8, c2=0.2):
@@ -10,9 +11,8 @@ class BirdParticle:
         :param c1: the cognitive weight
         :param c2: the social weight
         """
-        self.position_i = position
 
-        self.history = [self.position_i]
+        self.position_i = torch.tensor(position)
         self.velocity_i = torch.rand(self.position_i.shape) 
         # copy the current position to the best position
         
@@ -55,9 +55,9 @@ class BirdParticle:
     def update_position(self):
         """
         Updates the particle position based on its velocity.
+-
         """
         # update position based on velocity
         self.position_i = self.position_i +  self.velocity_i
         #clip between -1 and 1
-        self.position_i = torch.clamp(self.position_i, 0, 1)
-        self.history.append(self.position_i)
+        self.position_i = torch.clamp(self.position_i, -1, 1)
