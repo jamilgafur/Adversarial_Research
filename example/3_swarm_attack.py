@@ -2,6 +2,7 @@ from Adversarial_Observation.Swarm_Observer.Swarm import PSO
 from Adversarial_Observation.utils import seedEverything, buildCNN
 import matplotlib.pyplot as plt
 import torch
+import torchvision
 import numpy as np
 import tqdm 
 import pickle
@@ -23,7 +24,7 @@ def costFunc(model, input):
     return out.detach().numpy()[0][endValue]
 
 
-def randomPSO(model, inputs, costFunc, epochs):        
+def SwarmPSO(model, inputs, costFunc, epochs):        
     swarm = PSO(inputs, costFunc, model, w=.8, c1=.5, c2=.5)
     pred =  model(torch.tensor(swarm.pos_best_g.unsqueeze(0)).to(torch.float32))
     best = np.argmax(pred.detach().numpy())
@@ -35,9 +36,7 @@ def randomPSO(model, inputs, costFunc, epochs):
         best = np.argmax(pred.detach().numpy())
         print("epoch: {} best: {} confidence: {}".format(i, best, pred.detach().numpy()[0][best]))
           
-    
-
-def randomVisualize(model, inputs, costFunc, epochs):
+def SwarmPSOVisualize(model, inputs, costFunc, epochs, dirname):
     swarm = PSO(inputs, costFunc, model, w=.8, c1=.5, c2=.5)
 
     pred =  model(torch.tensor(swarm.pos_best_g.unsqueeze(0)).to(torch.float32))
@@ -54,13 +53,13 @@ def randomVisualize(model, inputs, costFunc, epochs):
     train_labels_reduced = np.load(open('./artifacts/train_labels.npy', 'rb'))
 
     # visualize the swarm in PCA space
-    os.makedirs('./artifacts/Random Swarm', exist_ok=True)
-    visualizeSwarm(np.array([i.position_i.numpy() for i in swarm.swarm]), train_data_reduced, train_labels_reduced, pca, "./artifacts/Random Swarm/epoch_{}".format(0))
+    os.makedirs(f'./artifacts/{dirname}', exist_ok=True)
+    visualizeSwarm(np.array([i.position_i.numpy() for i in swarm.swarm]), train_data_reduced, train_labels_reduced, pca, f'./artifacts/{dirname}/epoch_{0}')
 
     for i in tqdm.tqdm(range(epochs)):
         swarm.step()
         # visualize the swarm in PCA space
-        visualizeSwarm(np.array([i.position_i.numpy() for i in swarm.swarm]), train_data_reduced, train_labels_reduced, pca, "./artifacts/Random Swarm/epoch_{}".format(i+1))
+        visualizeSwarm(np.array([i.position_i.numpy() for i in swarm.swarm]), train_data_reduced, train_labels_reduced, pca, f'./artifacts/{dirname}/epoch_{i+1}')
         pred =  model(torch.tensor(swarm.pos_best_g.unsqueeze(0)).to(torch.float32))
         best = np.argmax(pred.detach().numpy())
         print("epoch {} best: {} confidence: {}".format(i, best, pred.detach().numpy()[0][best]))
@@ -77,10 +76,16 @@ def visualizeSwarm(positions, stable, stable_lables,  pca, title):
     ax.set_ylabel("PCA 2")
 
     # plot the stable data
-    ax.scatter(stable[:,0], stable[:,1], c=stable_lables, cmap='tab10', alpha=.5)
+    for i in range(10):
+        ax.scatter(stable[stable_lables == i][:,0], stable[stable_lables == i][:,1], c=f'C{i}', alpha=.5, label=i)
+
     positions = pca.transform(positions.reshape(-1, 28*28))
     # plot the swarm
-    ax.scatter(positions[:,0], positions[:,1], c='black', alpha=.5, marker='x')
+    ax.scatter(positions[:,0], positions[:,1], c='black', alpha=.5, marker='x', label='swarm')
+
+    # show the legend
+    plt.legend()
+
 
     plt.savefig(title)
     
@@ -94,13 +99,35 @@ def main():
 
     points = 500
     input_shape = (points, 1, 28, 28)
-    epochs = 100
+    epochs = 10
 
 
     random_inputs = np.random.rand(*input_shape)
-    # randomPSO(model, random_inputs, costFunc, epochs)
+    # SwarmPSO(model, random_inputs, costFunc, epochs)
+    SwarmPSOVisualize(model, random_inputs, costFunc, epochs, "ran_attack_vis")
 
-    randomVisualize(model, random_inputs, costFunc, epochs)
+    # load the train data using torchvision
+    train_data = torchvision.datasets.MNIST('./data', train=True, download=True, transform=torchvision.transforms.Compose([
+        torchvision.transforms.ToTensor(),  
+        torchvision.transforms.Normalize((0.1307,), (0.3081,))
+    ]))
+
+    
+    train_labels = train_data.targets
+    train_data = train_data.data.numpy()
+    train_data = train_data.reshape(-1, 1, 28,28)
+    
+    # get all data with label 5
+    train_data = train_data[train_labels == 5][:]
+    train_labels = train_labels[train_labels == 5]
+
+    # SwarmPSO(model, train_data, costFunc, epochs)
+    SwarmPSOVisualize(model, train_data, costFunc, epochs, "5_attack_vis")
+
+
+    
+
+
 
 if __name__ == "__main__":
     main()
