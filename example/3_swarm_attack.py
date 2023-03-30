@@ -1,5 +1,6 @@
 from Adversarial_Observation.Swarm_Observer.Swarm import PSO
 from Adversarial_Observation.utils import seedEverything, buildCNN
+from Adversarial_Observation.visualize import visualizeGIF
 import matplotlib.pyplot as plt
 import torch
 import torchvision
@@ -12,6 +13,7 @@ from sklearn.decomposition import PCA
 # ==== Global Variables ====
 # The value of the column we want to optimize for
 endValue: int = 1
+startValue: int = 7
 #================================================
 
 def costFunc(model, input):
@@ -28,43 +30,62 @@ def SwarmPSO(model, inputs, costFunc, epochs):
     swarm = PSO(inputs, costFunc, model, w=.8, c1=.5, c2=.5)
     pred =  model(torch.tensor(swarm.pos_best_g.unsqueeze(0)).to(torch.float32))
     best = np.argmax(pred.detach().numpy())
-    print("initial best: {} confidence: {}".format(best, pred.detach().numpy()[0][best]))
           
     for i in tqdm.tqdm(range(epochs)):
         swarm.step()
         pred =  model(torch.tensor(swarm.pos_best_g.unsqueeze(0)).to(torch.float32))
         best = np.argmax(pred.detach().numpy())
-        print("epoch: {} best: {} confidence: {}".format(i, best, pred.detach().numpy()[0][best]))
+
+    #plot the best position
+    plt.imshow(torch.reshape(swarm.pos_best_g, (28, 28)).detach().numpy())
+    
           
-def SwarmPSOVisualize(model, inputs, costFunc, epochs, dirname):
-    swarm = PSO(inputs, costFunc, model, w=.8, c1=.5, c2=.5)
+def SwarmPSOVisualize(model, inputs, costFunc, epochs, dirname, specific=None):
+    swarm = PSO(inputs, costFunc, model, w=.8, c1=.8, c2=.5)
 
-    pred =  model(torch.tensor(swarm.pos_best_g.unsqueeze(0)).to(torch.float32))
-    best = np.argmax(pred.detach().numpy())
-    print("initial best: {} confidence: {}".format(best, pred.detach().numpy()[0][best]))
+    data = torchvision.datasets.MNIST('./data', train=True, download=True, transform=torchvision.transforms.Compose([
+        torchvision.transforms.ToTensor(),  
+        torchvision.transforms.Normalize((0.1307,), (0.3081,))
+    ]))
 
-    # load the PCA data
-    with open('./artifacts/pca.pkl', 'rb') as f:
-        pca = pickle.load(f)
-        
+    train_data = data.data/255
+    train_labels = data.targets
 
-    # load the train reduced data
-    train_data_reduced = np.load(open('./artifacts/train_data_reduced.npy', 'rb'))
-    train_labels_reduced = np.load(open('./artifacts/train_labels.npy', 'rb'))
+    # reduce the data to 2 dimensions for visualization
+    pca = PCA(n_components=2)
+    train_data_reduced = pca.fit_transform(train_data.reshape(-1, 28*28))
+    train_labels_reduced = train_labels
 
+   
     # visualize the swarm in PCA space
     os.makedirs(f'./artifacts/{dirname}', exist_ok=True)
-    visualizeSwarm(np.array([i.position_i.numpy() for i in swarm.swarm]), train_data_reduced, train_labels_reduced, pca, f'./artifacts/{dirname}/epoch_{0}')
+    positions = np.array([i.position_i.numpy() for i in swarm.swarm])
+    visualizeSwarm(positions, train_data_reduced, train_labels_reduced, pca, f'./artifacts/{dirname}/epoch_{0}', specific)
 
+    filenames = [f'./artifacts/{dirname}/epoch_{0}.png']
     for i in tqdm.tqdm(range(epochs)):
         swarm.step()
         # visualize the swarm in PCA space
-        visualizeSwarm(np.array([i.position_i.numpy() for i in swarm.swarm]), train_data_reduced, train_labels_reduced, pca, f'./artifacts/{dirname}/epoch_{i+1}')
-        pred =  model(torch.tensor(swarm.pos_best_g.unsqueeze(0)).to(torch.float32))
-        best = np.argmax(pred.detach().numpy())
-        print("epoch {} best: {} confidence: {}".format(i, best, pred.detach().numpy()[0][best]))
+        positions = np.array([i.position_i.numpy() for i in swarm.swarm])
+        visualizeSwarm(positions, train_data_reduced, train_labels_reduced, pca, f'./artifacts/{dirname}/epoch_{i+1}', specific)
+        filenames.append(f'./artifacts/{dirname}/epoch_{i+1}.png')
+        
+        #plot a point 
+        plt.imshow(swarm.swarm[0].position_i.reshape(28, 28).detach().numpy(), cmap='gray')
+        plt.savefig(f'./artifacts/{dirname}/epoch_{i+1}_point.png')
+        plt.clf()
+        plt.close()
 
-def visualizeSwarm(positions, stable, stable_lables,  pca, title):
+
+    # create the gif
+    visualizeGIF(filenames, f'./artifacts/{dirname}/swarm.gif')
+
+    # export the swarm as a csv
+    swarm.save(f'./artifacts/{dirname}/swarm.csv')
+
+
+
+def visualizeSwarm(positions, stable, stable_lables,  pca, title, specific=None):
     """
     This function takes a swarm and plots it in PCA space.
     """
@@ -76,9 +97,15 @@ def visualizeSwarm(positions, stable, stable_lables,  pca, title):
     ax.set_ylabel("PCA 2")
 
     # plot the stable data
-    for i in range(10):
-        ax.scatter(stable[stable_lables == i][:,0], stable[stable_lables == i][:,1], c=f'C{i}', alpha=.5, label=i)
+    if specific is None:
+        for i in range(10):
+            ax.scatter(stable[stable_lables == i][:,0], stable[stable_lables == i][:,1], c=f'C{i}', alpha=.5, label=i)
+    else:
+        for i in specific:
+            ax.scatter(stable[stable_lables == i][:,0], stable[stable_lables == i][:,1], c=f'C{i}', alpha=.5, label=i)
 
+
+    
     positions = pca.transform(positions.reshape(-1, 28*28))
     # plot the swarm
     ax.scatter(positions[:,0], positions[:,1], c='black', alpha=.5, marker='x', label='swarm')
@@ -86,8 +113,9 @@ def visualizeSwarm(positions, stable, stable_lables,  pca, title):
     # show the legend
     plt.legend()
 
-
-    plt.savefig(title)
+    plt.savefig(title+".png")
+    plt.clf()
+    plt.close()
     
 
 def main():
@@ -104,7 +132,7 @@ def main():
 
     random_inputs = np.random.rand(*input_shape)
     # SwarmPSO(model, random_inputs, costFunc, epochs)
-    SwarmPSOVisualize(model, random_inputs, costFunc, epochs, "ran_attack_vis")
+    # SwarmPSOVisualize(model, random_inputs, costFunc, epochs, "ran_attack_vis")
 
     # load the train data using torchvision
     train_data = torchvision.datasets.MNIST('./data', train=True, download=True, transform=torchvision.transforms.Compose([
@@ -114,15 +142,15 @@ def main():
 
     
     train_labels = train_data.targets
-    train_data = train_data.data.numpy()
+    train_data = train_data.data.numpy()/255
     train_data = train_data.reshape(-1, 1, 28,28)
     
     # get all data with label 5
-    train_data = train_data[train_labels == 5][:]
-    train_labels = train_labels[train_labels == 5]
+    train_data = train_data[train_labels == startValue][:]
+    train_labels = train_labels[train_labels == startValue]
 
     # SwarmPSO(model, train_data, costFunc, epochs)
-    SwarmPSOVisualize(model, train_data, costFunc, epochs, "5_attack_vis")
+    SwarmPSOVisualize(model, train_data, costFunc, epochs, "5_attack_vis", [startValue, endValue-1])
 
 
     

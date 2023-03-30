@@ -1,36 +1,16 @@
-from torch import nn
-import numpy as np
 import torch
-from typing import Tuple, List
-
-
-def cleanPositions(positions: List[torch.Tensor]) -> torch.Tensor:
-    """
-    This function converts the positions and best positions to a list of tensors, combines all unique positions and best positions
-    and removes duplicates. It then adds an extra dimension and returns the positions.
-    """
-    positions = torch.cat(positions)
-    positions = torch.unique(positions, dim=0)
-    # add an extra dimension
-    positions = torch.unsqueeze(positions, 1)
-    return positions
-
-def generate_random_inputs(num_of_inputs: int, input_shape: Tuple[int, int, int], mu: float=0, sigma: float=1) -> np.ndarray:
-    """
-    This function generates random inputs of a given shape from a normal distribution with mean mu and standard deviation sigma.
-    :param num_of_inputs: the number of inputs to generate
-    :param input_shape: the shape of the inputs to generate
-    :param mu: the mean of the normal distribution
-    :param sigma: the standard deviation of the normal distribution
-    :return: a numpy array of shape (num_of_inputs, *input_shape) containing the generated inputs
-    """
-    return np.random.normal(mu, sigma, size=(num_of_inputs, *input_shape))
+import torch.nn as nn
+import numpy as np
 
 def buildCNN(output_size: int) -> nn.Sequential:
     """
     Builds a convolutional neural network model.
+
     :param output_size: The number of output classes.
+    :type output_size: int
+
     :return: The model.
+    :rtype: torch.nn.Sequential
     """
     # Create a sequential container for building the model
     return nn.Sequential(
@@ -59,7 +39,12 @@ def buildCNN(output_size: int) -> nn.Sequential:
 def seedEverything(seed: int) -> None:
     """
     Seeds the random number generators for Python, PyTorch, and CUDA to make the results reproducible.
+
     :param seed: The seed to use for random number generation.
+    :type seed: int
+
+    :return: None
+    :rtype: None
     """
     # Seed NumPy for random number generation.
     np.random.seed(seed)

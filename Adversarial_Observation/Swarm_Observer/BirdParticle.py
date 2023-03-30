@@ -15,6 +15,8 @@ class BirdParticle:
         self.position_i = torch.tensor(position)
         self.velocity_i = torch.rand(self.position_i.shape) 
         # copy the current position to the best position
+
+        self.history = [self.position_i]
         
         self.pos_best_i = self.position_i.detach().clone()   # best position individual
         self.err_best_i = -1   # best error individual
@@ -52,6 +54,7 @@ class BirdParticle:
         vel_social = self.c2 * r2 * np.subtract(pos_best_g, self.position_i)
         self.velocity_i = np.multiply(self.w, np.add(np.add(self.velocity_i, vel_cognitive), vel_social))
 
+
     def update_position(self):
         """
         Updates the particle position based on its velocity.
@@ -59,5 +62,8 @@ class BirdParticle:
         """
         # update position based on velocity
         self.position_i = self.position_i +  self.velocity_i
+
         #clip between -1 and 1
-        self.position_i = torch.clamp(self.position_i, -1, 1)
+        # self.position_i = torch.clamp(self.position_i, -1, 1)
+
+        self.history.append(self.position_i)
