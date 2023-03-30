@@ -17,6 +17,8 @@ class PSO:
         :param c2: The social weight.
         """
         self.swarm = []
+        self.epoch = 0
+        self.history = []
         for i in starting_positions:
             self.swarm.append(BirdParticle(i, w=w, c1=c1, c2=c2))
         self.cost_func = cost_func
@@ -41,15 +43,13 @@ class PSO:
             p.update_velocity(pos_best_g=self.pos_best_g)
             p.update_position()
 
+        # Update history.
+        for particle in self.swarm:
+            particle.history.append([self.epoch] + [i for i in particle.position_i.detach().numpy()]) 
 
     def save(self, filename: str):
-        data = []
 
-        for p in self.swarm:
-            for i in range(len(p.history)):
-                data.append([i, p.history[i]])
-
-        df = pd.DataFrame(data, columns=['Epoch', 'Position'])
+        df = pd.DataFrame(self.history,  columns=['Epoch']+['pos_'+str(i) for i in range(len(self.swarm[0].position_i))])
         # sort dataframe by epoch
         df = df.sort_values(by=['Epoch'])
         df.to_csv(filename, index=False)

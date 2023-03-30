@@ -148,7 +148,7 @@ def main():
 
     # define the optimizer
     optimizer = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.5)
-    epochs = 1
+    epochs = 10
     
     # train the model
     for epoch in tqdm.tqdm(range(1, epochs + 1)):

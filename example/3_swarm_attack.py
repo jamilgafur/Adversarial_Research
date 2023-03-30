@@ -12,8 +12,8 @@ from sklearn.decomposition import PCA
 
 # ==== Global Variables ====
 # The value of the column we want to optimize for
-endValue: int = 1
-startValue: int = 7
+startValue: int = 8
+endValue: int = 0
 #================================================
 
 def costFunc(model, input):
@@ -41,7 +41,7 @@ def SwarmPSO(model, inputs, costFunc, epochs):
     
           
 def SwarmPSOVisualize(model, inputs, costFunc, epochs, dirname, specific=None):
-    swarm = PSO(inputs, costFunc, model, w=.8, c1=.8, c2=.5)
+    swarm = PSO(inputs, costFunc, model, w=.5, c1=.2, c2=.2)
 
     data = torchvision.datasets.MNIST('./data', train=True, download=True, transform=torchvision.transforms.Compose([
         torchvision.transforms.ToTensor(),  
@@ -72,16 +72,19 @@ def SwarmPSOVisualize(model, inputs, costFunc, epochs, dirname, specific=None):
         
         #plot a point 
         plt.imshow(swarm.swarm[0].position_i.reshape(28, 28).detach().numpy(), cmap='gray')
+        plt.colorbar()
         plt.savefig(f'./artifacts/{dirname}/epoch_{i+1}_point.png')
         plt.clf()
         plt.close()
 
 
     # create the gif
+    print("making gif")
     visualizeGIF(filenames, f'./artifacts/{dirname}/swarm.gif')
-
+    print("saving")
     # export the swarm as a csv
     swarm.save(f'./artifacts/{dirname}/swarm.csv')
+    print("done")
 
 
 
@@ -127,12 +130,15 @@ def main():
 
     points = 500
     input_shape = (points, 1, 28, 28)
-    epochs = 10
+    epochs = 20
 
 
     random_inputs = np.random.rand(*input_shape)
+    sparcity = .8
+    # set 80% of the inputs to 0
+    random_inputs[random_inputs < sparcity] = 0
     # SwarmPSO(model, random_inputs, costFunc, epochs)
-    # SwarmPSOVisualize(model, random_inputs, costFunc, epochs, "ran_attack_vis")
+    SwarmPSOVisualize(model, random_inputs, costFunc, epochs, "ran_attack_vis")
 
     # load the train data using torchvision
     train_data = torchvision.datasets.MNIST('./data', train=True, download=True, transform=torchvision.transforms.Compose([
@@ -150,7 +156,7 @@ def main():
     train_labels = train_labels[train_labels == startValue]
 
     # SwarmPSO(model, train_data, costFunc, epochs)
-    SwarmPSOVisualize(model, train_data, costFunc, epochs, "5_attack_vis", [startValue, endValue-1])
+    SwarmPSOVisualize(model, train_data, costFunc, epochs, "5_attack_vis", [startValue, endValue])
 
 
     

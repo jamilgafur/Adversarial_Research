@@ -64,6 +64,6 @@ class BirdParticle:
         self.position_i = self.position_i +  self.velocity_i
 
         #clip between -1 and 1
-        # self.position_i = torch.clamp(self.position_i, -1, 1)
+        self.position_i = torch.clamp(self.position_i, -1, 1)
 
         self.history.append(self.position_i)
