@@ -19,8 +19,8 @@ class BirdParticle:
         self.history = [self.position_i]
         
         self.pos_best_i = self.position_i.detach().clone()   # best position individual
-        self.err_best_i = -1   # best error individual
-        self.err_i = -1   # error individual
+        self.cost_best_i = -1   # best error individual
+        self.cost_i = -1   # error individual
 
         self.w = w
         self.c1 = c1
@@ -34,11 +34,15 @@ class BirdParticle:
         - costFunc (function): a function that calculates the fitness value of the particle
         - model: the PyTorch model to use for calculating the fitness value
         """
-        self.err_i = costFunc(model, self.position_i)
+        self.cost_i = costFunc(model, self.position_i)
 
-        if self.err_i > self.err_best_i or self.err_best_i == -1:
+        # check to see if the current position is an individual best
+        # best has the highest confidence
+        if self.cost_i >= self.cost_best_i or self.cost_best_i == -1:
             self.pos_best_i = self.position_i.clone().detach()
-            self.err_best_i = self.err_i
+            self.cost_best_i = self.cost_i
+
+
                     
     def update_velocity(self, pos_best_g):
         """
@@ -64,6 +68,6 @@ class BirdParticle:
         self.position_i = self.position_i +  self.velocity_i
 
         #clip between -1 and 1
-        self.position_i = torch.clamp(self.position_i, -1, 1)
+        self.position_i = torch.clamp(self.position_i, 0, 1)
 
         self.history.append(self.position_i)

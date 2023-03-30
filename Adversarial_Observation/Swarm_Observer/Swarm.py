@@ -24,7 +24,7 @@ class PSO:
         self.cost_func = cost_func
         self.model = model
         self.pos_best_g = self.swarm[0].position_i.clone().detach()
-        self.err_best_g = self.swarm[0].err_i
+        self.cos_best_g = self.swarm[0].cost_i
 
     def step(self) -> tuple:
         """
@@ -32,11 +32,16 @@ class PSO:
         :return: A tuple containing the final positions of the swarm and the best positions of the swarm.
         """
         # Evaluate fitness and update the best position and error for the group.
+        index = 0
         for p in self.swarm:
             p.evaluate(self.cost_func, self.model)
-            if p.err_i > self.err_best_g:
+            # Determine if current particle is the best (globally)
+            # best has the highest confidence
+            if p.cost_i >= self.cos_best_g:
                 self.pos_best_g = p.position_i.clone().detach()
-                self.err_best_g = p.err_i
+                self.cos_best_g = p.cost_i
+            print(f"particle {index}: error: {p.cost_i}, best error: {p.cost_best_i}")
+            index += 1
 
         # Update velocities and positions.
         for p in self.swarm:
