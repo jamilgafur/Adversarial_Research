@@ -12,8 +12,8 @@ from sklearn.decomposition import PCA
 
 # ==== Global Variables ====
 # The value of the column we want to optimize for
-startValue: int = 8
-endValue: int = 0
+startValue: int = 0
+endValue: int = 3
 #================================================
 
 def costFunc(model, input):
@@ -41,7 +41,7 @@ def SwarmPSO(model, inputs, costFunc, epochs):
     
           
 def SwarmPSOVisualize(model, inputs, costFunc, epochs, dirname, specific=None):
-    swarm = PSO(inputs, costFunc, model, w=.5, c1=.2, c2=.2)
+    swarm = PSO(inputs, costFunc, model, w=.8, c1=.5, c2=.5)
 
     data = torchvision.datasets.MNIST('./data', train=True, download=True, transform=torchvision.transforms.Compose([
         torchvision.transforms.ToTensor(),  
@@ -52,7 +52,7 @@ def SwarmPSOVisualize(model, inputs, costFunc, epochs, dirname, specific=None):
     train_labels = data.targets
 
     # reduce the data to 2 dimensions for visualization
-    pca = PCA(n_components=2)
+    pca = PCA(n_components=50)
     train_data_reduced = pca.fit_transform(train_data.reshape(-1, 28*28))
     train_labels_reduced = train_labels
 
@@ -69,22 +69,39 @@ def SwarmPSOVisualize(model, inputs, costFunc, epochs, dirname, specific=None):
         positions = np.array([i.position_i.numpy() for i in swarm.swarm])
         visualizeSwarm(positions, train_data_reduced, train_labels_reduced, pca, f'./artifacts/{dirname}/epoch_{i+1}', specific)
         filenames.append(f'./artifacts/{dirname}/epoch_{i+1}.png')
-        
-        #plot a point 
-        plt.imshow(swarm.swarm[0].position_i.reshape(28, 28).detach().numpy(), cmap='gray')
-        plt.colorbar()
-        plt.savefig(f'./artifacts/{dirname}/epoch_{i+1}_point.png')
-        plt.clf()
-        plt.close()
+        plotInfo(swarm, model, dirname, i+1)
 
 
     # create the gif
-    print("making gif")
     visualizeGIF(filenames, f'./artifacts/{dirname}/swarm.gif')
-    print("saving")
+    
     # export the swarm as a csv
     swarm.save(f'./artifacts/{dirname}/swarm.csv')
-    print("done")
+    
+def plotInfo(swarm, model, dirname, epoch):
+    """
+    This function takes a swarm and plots the average position of the swarm.
+    """
+    # plot the average position of the swarm
+    average = torch.mean(torch.stack([i.position_i for i in swarm.swarm]), dim=0)
+    confidence = model(torch.reshape(average, (1, 1, 28, 28)).to(torch.float32)).detach().numpy()[0][endValue]
+    plt.title(f'Average Position of Swarm at Epoch {epoch} with Confidence {confidence}')
+    plt.imshow(average.reshape(28, 28).detach().numpy(), cmap='gray')
+    plt.colorbar()
+    plt.savefig(f'./artifacts/{dirname}/average_{epoch}.png')
+    plt.clf()
+    plt.close()
+
+    # plot the best position of the swarm
+    best = swarm.pos_best_g
+    confidence = model(torch.reshape(best, (1, 1, 28, 28)).to(torch.float32)).detach().numpy()[0][endValue]
+    plt.title(f'Best Position of Swarm at Epoch {epoch} with Confidence {confidence}')
+    plt.imshow(best.reshape(28, 28).detach().numpy(), cmap='gray')
+    plt.colorbar()
+    plt.savefig(f'./artifacts/{dirname}/best_{epoch}.png')
+    plt.clf()
+    plt.close()
+
 
 
 
@@ -128,14 +145,14 @@ def main():
     model.load_state_dict(torch.load('./artifacts/mnist_cnn.pt'))
     model.eval()
 
-    points = 500
+    points = 1000
     input_shape = (points, 1, 28, 28)
-    epochs = 20
+    epochs = 50
 
 
     random_inputs = np.random.rand(*input_shape)
-    sparcity = .8
-    # set 80% of the inputs to 0
+    sparcity = .80
+    # set sparcity of the inputs to 0
     random_inputs[random_inputs < sparcity] = 0
     # SwarmPSO(model, random_inputs, costFunc, epochs)
     SwarmPSOVisualize(model, random_inputs, costFunc, epochs, "ran_attack_vis")

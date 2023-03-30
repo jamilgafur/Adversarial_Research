@@ -19,6 +19,7 @@ class PSO:
         self.swarm = []
         self.epoch = 0
         self.history = []
+        
         for i in starting_positions:
             self.swarm.append(BirdParticle(i, w=w, c1=c1, c2=c2))
         self.cost_func = cost_func
@@ -32,7 +33,6 @@ class PSO:
         :return: A tuple containing the final positions of the swarm and the best positions of the swarm.
         """
         # Evaluate fitness and update the best position and error for the group.
-        index = 0
         for p in self.swarm:
             p.evaluate(self.cost_func, self.model)
             # Determine if current particle is the best (globally)
@@ -40,8 +40,6 @@ class PSO:
             if p.cost_i >= self.cos_best_g:
                 self.pos_best_g = p.position_i.clone().detach()
                 self.cos_best_g = p.cost_i
-            print(f"particle {index}: error: {p.cost_i}, best error: {p.cost_best_i}")
-            index += 1
 
         # Update velocities and positions.
         for p in self.swarm:

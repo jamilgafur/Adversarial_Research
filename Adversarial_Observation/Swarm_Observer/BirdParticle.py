@@ -3,7 +3,7 @@ import numpy as np
 import pdb
 
 class BirdParticle:
-    def __init__(self, position, w=1.0, c1=0.8, c2=0.2):
+    def __init__(self, position, w=1.0, c1=0.8, c2=0.2, name=None):
         """
         Initializes a particle.
         :param position: the initial position of the particle
@@ -25,6 +25,7 @@ class BirdParticle:
         self.w = w
         self.c1 = c1
         self.c2 = c2
+        self.name = name
 
     def evaluate(self, costFunc, model):
         """
@@ -54,9 +55,9 @@ class BirdParticle:
         r1 = np.random.random()
         r2 = np.random.random()
 
-        vel_cognitive = self.c1 * r1 * np.add(self.pos_best_i, self.position_i)
-        vel_social = self.c2 * r2 * np.subtract(pos_best_g, self.position_i)
-        self.velocity_i = np.multiply(self.w, np.add(np.add(self.velocity_i, vel_cognitive), vel_social))
+        vel_cognitive = self.c1 * r1 * (self.pos_best_i - self.position_i)
+        vel_social = self.c2 * r2 * (pos_best_g - self.position_i)
+        self.velocity_i = self.w * self.velocity_i + vel_cognitive + vel_social
 
 
     def update_position(self):
@@ -66,8 +67,9 @@ class BirdParticle:
         """
         # update position based on velocity
         self.position_i = self.position_i +  self.velocity_i
+        
 
-        #clip between -1 and 1
+        # clamp position to be within the bounds
         self.position_i = torch.clamp(self.position_i, 0, 1)
 
         self.history.append(self.position_i)
